@@ -96,7 +96,11 @@ FINAL_STORE_TEMPLATE = """
         .user-reg-btn { background: var(--white); color: var(--primary); border: none; padding: 10px 18px; border-radius: 25px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: 0.3s; }
         .user-reg-btn:hover { background: #ffa502; color: var(--white); }
 
-        .search-box { display: flex; flex: 1; max-width: 350px; min-width: 220px; }
+        /* 👉 नवीन डिझाइन केलेले अप्रतिम शेअर बटण */
+        .share-web-btn { background: #25d366; color: white; border: none; padding: 10px 18px; border-radius: 25px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: 0.3s; text-decoration: none; font-size: 14px; }
+        .share-web-btn:hover { background: #1ebe5d; transform: translateY(-2px); }
+
+        .search-box { display: flex; flex: 1; max-width: 300px; min-width: 200px; }
         .search-box input { width: 100%; padding: 10px 15px; border: none; border-radius: 6px 0 0 6px; font-size: 14px; outline: none; }
         .search-box button { background: #ffa502; color: var(--white); border: none; padding: 0 15px; border-radius: 0 6px 6px 0; cursor: pointer; font-weight: bold; }
 
@@ -211,12 +215,18 @@ FINAL_STORE_TEMPLATE = """
             <p>0 Size te 15 Varsh | Ladies & Gents Special Collection</p>
         </div>
         <div class="header-actions">
+            <!-- 👉 अप्रतिम आणि उठून दिसणारे शेअर स्टोअर बटण (Header मध्ये) -->
+            <button class="share-web-btn" onclick="shareStoreWebsite()">
+                📲 Share Website
+            </button>
+
             {% if session.get('user_mobile') %}
                 <span style="background:rgba(255,255,255,0.2); padding:8px 14px; border-radius:20px; font-size:13px; font-weight:bold;">👤 Hi, {{ session.get('user_name') }}</span>
                 <a href="/logout" style="background:#fff; color:#ff4757; padding:8px 14px; border-radius:20px; font-size:13px; font-weight:bold; text-decoration:none;">Logout</a>
             {% else %}
-                <button class="user-reg-btn" onclick="openRegModal()">👤 Customer Login / VIP</button>
+                <button class="user-reg-btn" onclick="openRegModal()">👤 Customer Login</button>
             {% endif %}
+
             <div class="search-box">
                 <input type="text" id="searchInput" placeholder="Search collection..." onkeyup="searchProducts()">
                 <button onclick="searchProducts()">🔍</button>
@@ -225,7 +235,7 @@ FINAL_STORE_TEMPLATE = """
     </header>
 
     <div class="marquee-banner">
-        🔥 Ultimate Store Live! Advanced Customer Login, Discount Coupons & Razorpay Online Active 🔥
+        🔥 Ultimate Store Live! Direct One-Click Website Sharing & Razorpay Online Active 🔥
     </div>
 
     <div class="layout-container">
@@ -274,9 +284,9 @@ FINAL_STORE_TEMPLATE = """
                         <button onclick="trackOrder()">Track</button>
                     </div>
                 </div>
-                <div class="utility-box" style="border-left-color: #2ed573;">
-                    <h3 style="color:var(--dark); font-size:15px;">💬 WhatsApp Catalog Share</h3>
-                    <a href="https://wa.me/?text=Check%20out%20Little%20Star%20Readymade%20Kids%20Wear,%20Beed!%20New%20Festive%20Collection%20Live%20Now." target="_blank" style="display:inline-block; margin-top:8px; background:#25d366; color:white; padding:8px 14px; border-radius:6px; font-size:13px; font-weight:bold; text-decoration:none;">Share Catalog 📲</a>
+                <div class="utility-box" style="border-left-color: #25d366;">
+                    <h3 style="color:var(--dark); font-size:15px;">📲 Direct WhatsApp Share</h3>
+                    <a href="https://wa.me/?text=⭐%20Little%20Star%20Readymade%20Kids%20Wear,%20Beed%20⭐%0ANew%20Festive%20Collection%200%20to%2015%20Years,%20Ladies%20&%20Gents%20Wear%20is%20now%20Live%20Online!%20Check%20here:%20https://littlestar-store.onrender.com" target="_blank" style="display:inline-block; margin-top:8px; background:#25d366; color:white; padding:8px 14px; border-radius:6px; font-size:13px; font-weight:bold; text-decoration:none;">Share on WhatsApp 💬</a>
                 </div>
                 <div class="utility-box" style="border-left-color: #ffa502; display:flex; flex-direction:column; justify-content:center;">
                     <button class="admin-toggle-btn" onclick="toggleAdminPanel()">🔒 Owner Dashboard</button>
@@ -495,7 +505,6 @@ FINAL_STORE_TEMPLATE = """
         </div>
     </div>
 
-    <!-- Customer Login / Registration Modal -->
     <div class="modal" id="regModal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('regModal')">&times;</span>
@@ -562,13 +571,22 @@ FINAL_STORE_TEMPLATE = """
         let currentProductPrice = 0;
         let discountMultiplier = 1;
 
+        // 👉 थेट एका क्लिकवर मोबाईलमधून वेबसाईट लिंक शेअर करणारे फंक्शन
+        function shareStoreWebsite() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Little Star Readymade Kids Wear',
+                    text: '⭐ Little Star Readymade Kids Wear, Beed ⭐ Explore new festive collection for 0-15 years kids, Ladies & Gents wear!',
+                    url: window.location.href
+                }).catch(() => {});
+            } else {
+                window.open('https://wa.me/?text=⭐%20Little%20Star%20Readymade%20Kids%20Wear,%20Beed%20⭐%20Check%20out%20our%20store:%20' + encodeURIComponent(window.location.href), '_blank');
+            }
+        }
+
         function addSize(sizeText) {
             let sizeInput = document.getElementById('finalSizesInput');
-            if(sizeInput.value === "") {
-                sizeInput.value = sizeText;
-            } else {
-                sizeInput.value += ", " + sizeText;
-            }
+            if(sizeInput.value === "") { sizeInput.value = sizeText; } else { sizeInput.value += ", " + sizeText; }
         }
 
         function clearSizes() { document.getElementById('finalSizesInput').value = ""; }
@@ -644,7 +662,7 @@ FINAL_STORE_TEMPLATE = """
                         let disc = data.discount;
                         discountMultiplier = (100 - disc) / 100;
                         let finalP = Math.round(currentProductPrice * discountMultiplier);
-                        document.getElementById('couponMsg.innerText') = "✅ Coupon Applied! " + disc + "% OFF. New Price: ₹" + finalP;
+                        document.getElementById('couponMsg').innerText = "✅ Coupon Applied! " + disc + "% OFF. New Price: ₹" + finalP;
                         alert("✅ Coupon Applied Successfully! Discount: " + disc + "%");
                     } else {
                         alert("❌ Invalid Coupon Code!");
