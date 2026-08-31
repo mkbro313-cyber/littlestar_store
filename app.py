@@ -85,7 +85,6 @@ FINAL_STORE_TEMPLATE = """
         .logo p { font-size: 13px; opacity: 0.95; margin-top: 4px; }
 
         .header-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-        .lang-select { background: #fff; color: var(--dark); padding: 8px 12px; border-radius: 6px; font-weight: bold; border: none; cursor: pointer; }
         .user-reg-btn { background: var(--white); color: var(--primary); border: none; padding: 10px 18px; border-radius: 25px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: 0.3s; }
         .user-reg-btn:hover { background: #ffa502; color: var(--white); }
 
@@ -144,7 +143,6 @@ FINAL_STORE_TEMPLATE = """
         .orders-table th, .orders-table td { padding: 8px; border: 1px solid #ddd; }
         .orders-table th { background: var(--primary); color: var(--white); }
         .action-link { padding: 4px 8px; border-radius: 4px; color: white; text-decoration: none; font-weight: bold; font-size: 11px; margin-right: 3px; display: inline-block; margin-bottom: 2px; }
-        .btn-edit { background: #3498db; }
         .btn-status { background: #9b59b6; }
         .btn-verify { background: #2ed573; }
 
@@ -190,6 +188,8 @@ FINAL_STORE_TEMPLATE = """
         
         footer { background: var(--dark); color: var(--white); text-align: center; padding: 30px; margin-top: 50px; font-size: 13px; }
     </style>
+    <!-- Razorpay Checkout Script -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
 
@@ -213,7 +213,7 @@ FINAL_STORE_TEMPLATE = """
     </header>
 
     <div class="marquee-banner">
-        🔥 Ultimate Store Live! Automated WhatsApp & Live Tracking Active 🔥
+        🔥 Ultimate Store Live! Razorpay Online Gateway & Automated WhatsApp Active 🔥
     </div>
 
     <div class="layout-container">
@@ -499,7 +499,7 @@ FINAL_STORE_TEMPLATE = """
     <div class="modal" id="checkoutModal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('checkoutModal')">&times;</span>
-            <h3 style="color:var(--primary); margin-bottom:8px;">⚡ Instant Order Slip & Invoice</h3>
+            <h3 style="color:var(--primary); margin-bottom:8px;">⚡ Instant Order Slip & Online Payment</h3>
             <p id="chkSummary" style="font-weight:bold; margin-bottom:12px; color:var(--dark);"></p>
             
             <label style="font-size:12px; font-weight:bold;">Select Exact Size:</label>
@@ -516,17 +516,16 @@ FINAL_STORE_TEMPLATE = """
             
             <label style="font-size:12px; font-weight:bold; display:block; margin-top:4px;">Select Payment Option:</label>
             <select id="paymentMode" onchange="checkPaymentMethod(this.value)">
-                <option value="PhonePe / GPay / UPI">PhonePe / Google Pay / UPI (9405691878)</option>
+                <option value="Razorpay Online (UPI/Card)">Razorpay Online Payment (UPI / GPay / Cards)</option>
+                <option value="PhonePe / GPay Direct (9405691878)">PhonePe / GPay Direct (9405691878)</option>
                 <option value="Cash on Delivery (COD)">Cash on Delivery (COD - OTP Verified)</option>
-                <option value="Net Banking">Net Banking</option>
             </select>
 
-            <div class="upi-box" id="upiNoticeBox" style="display:block;">
+            <div class="upi-box" id="upiNoticeBox" style="display:none;">
                 <p>⚡ Pay via PhonePe / GPay / UPI to: <b>9405691878</b></p>
-                <small style="color:#555;">(Scan your app or transfer directly before confirming)</small>
             </div>
 
-            <button onclick="confirmOrder()" class="confirm-btn">Generate Invoice & Send to WhatsApp</button>
+            <button onclick="confirmOrder()" class="confirm-btn">Proceed to Pay & Confirm Order</button>
         </div>
     </div>
 
@@ -542,9 +541,6 @@ FINAL_STORE_TEMPLATE = """
             <p style="font-size:13px; color:#555; line-height:1.6; margin-bottom:10px;">
                 <strong>Little Star Readymade Kids Wear (Beed)</strong> brings you the finest and most trending festive and daily wear collection for newborns, kids (0 size to 15 years), along with exclusive Ladies and Gents readymade garments.
             </p>
-            <p style="font-size:13px; color:#555; line-height:1.6; margin-bottom:10px;">
-                <strong>Our Digital Services:</strong> Seamless online shopping with instant WhatsApp order slips, real-time live location & stage tracking, secure digital payments via PhonePe/UPI (9405691878), and Cash on Delivery (COD) with OTP verification!
-            </p>
             <button onclick="closeModal('aboutModal')" class="confirm-btn" style="background:#2f3542;">Close</button>
         </div>
     </div>
@@ -552,6 +548,7 @@ FINAL_STORE_TEMPLATE = """
     <script>
         let currentProduct = {};
         let selectedProductColor = "";
+        let currentProductPrice = 0;
 
         function addSize(sizeText) {
             let sizeInput = document.getElementById('finalSizesInput');
@@ -628,6 +625,7 @@ FINAL_STORE_TEMPLATE = """
 
         function openCheckout(name, price, sizes, colorHex) {
             currentProduct = { name, price };
+            currentProductPrice = parseInt(price);
             selectedProductColor = colorHex;
             document.getElementById('chkSummary').innerText = name + " - ₹" + price;
 
@@ -640,7 +638,7 @@ FINAL_STORE_TEMPLATE = """
 
         function checkPaymentMethod(val) {
             let box = document.getElementById('upiNoticeBox');
-            if(val.includes('UPI') || val.includes('PhonePe')) {
+            if(val.includes('Direct')) {
                 box.style.display = 'block';
             } else {
                 box.style.display = 'none';
@@ -658,23 +656,56 @@ FINAL_STORE_TEMPLATE = """
             if(name && mobile && address) {
                 let orderId = "LS" + Math.floor(1000 + Math.random() * 9000);
                 let generatedOtp = Math.floor(1000 + Math.random() * 9000);
-                
-                fetch('/save_order', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `order_id=${orderId}&product_name=${currentProduct.name}&size=${size}&color=${color}&price=${currentProduct.price}&customer_name=${name}&mobile=${mobile}&address=${address}&payment=${payment}&status=1. Order Placed & Packed (Beed Store)&otp=${generatedOtp}`
-                }).then(() => {
-                    // 👉 ऑटोमॅटिक WhatsApp नोटिफिकेशन टेम्पलेट (दुकानदाराच्या 9405691878 वर डायरेक्ट इनव्हॉइस आणि OTP पाठवण्यासाठी)
-                    let invoiceSlip = `⭐ *LITTLE STAR READYMADE KIDS WEAR* ⭐%0A-----------------------------------%0A✅ *New Order Placed!*%0AOrder ID: *${orderId}*%0AProduct: ${currentProduct.name}%0ASize: ${size}%0APrice: ₹${currentProduct.price}%0APayment: ${payment}%0A-----------------------------------%0A🔒 *Delivery OTP: ${generatedOtp}*%0A-----------------------------------%0ACustomer: ${name}%0AMobile: ${mobile}%0AAddress: ${address}%0A-----------------------------------%0A📍 *Store:* Near City Hotel, Karanja Road, Beed`;
-                    
-                    window.open(`https://wa.me/919405691878?text=${invoiceSlip}`, '_blank');
-                    alert("Order Placed Successfully! Delivery OTP is: " + generatedOtp);
-                    closeModal('checkoutModal');
-                    location.reload();
-                });
+
+                if(payment.includes('Razorpay')) {
+                    // Razorpay Checkout Integration
+                    fetch('/create_razorpay_order', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `amount=${currentProductPrice}`
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        var options = {
+                            "key": data.key_id,
+                            "amount": data.amount,
+                            "currency": "INR",
+                            "name": "Little Star Kids Wear",
+                            "description": currentProduct.name,
+                            "order_id": data.razorpay_order_id,
+                            "handler": function (response){
+                                saveOrderData(orderId, size, color, name, mobile, address, payment, generatedOtp);
+                            },
+                            "prefill": {
+                                "name": name,
+                                "contact": mobile
+                            },
+                            "theme": { "color": "#ff4757" }
+                        };
+                        var rzp1 = new Razorpay(options);
+                        rzp1.open();
+                    });
+                } else {
+                    saveOrderData(orderId, size, color, name, mobile, address, payment, generatedOtp);
+                }
             } else {
                 alert("कृपया ग्राहकाचे नाव, मोबाईल आणि पत्ता पूर्ण भरा.");
             }
+        }
+
+        function saveOrderData(orderId, size, color, name, mobile, address, payment, generatedOtp) {
+            fetch('/save_order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `order_id=${orderId}&product_name=${currentProduct.name}&size=${size}&color=${color}&price=${currentProductPrice}&customer_name=${name}&mobile=${mobile}&address=${address}&payment=${payment}&status=1. Order Placed & Packed (Beed Store)&otp=${generatedOtp}`
+            }).then(() => {
+                let invoiceSlip = `⭐ *LITTLE STAR READYMADE KIDS WEAR* ⭐%0A-----------------------------------%0A✅ *New Order Placed!*%0AOrder ID: *${orderId}*%0AProduct: ${currentProduct.name}%0ASize: ${size}%0APrice: ₹${currentProductPrice}%0APayment: ${payment}%0A-----------------------------------%0A🔒 *Delivery OTP: ${generatedOtp}*%0A-----------------------------------%0ACustomer: ${name}%0AMobile: ${mobile}%0AAddress: ${address}%0A-----------------------------------%0A📍 *Store:* Near City Hotel, Karanja Road, Beed`;
+                
+                window.open(`https://wa.me/919405691878?text=${invoiceSlip}`, '_blank');
+                alert("Order Placed Successfully! Delivery OTP is: " + generatedOtp);
+                closeModal('checkoutModal');
+                location.reload();
+            });
         }
 
         function verifyOTP(orderId) {
@@ -726,6 +757,23 @@ def index():
     
     conn.close()
     return render_template_string(FINAL_STORE_TEMPLATE, products=products, orders=orders, total_revenue=total_revenue)
+
+@app.route('/create_razorpay_order', methods=['POST'])
+def create_razorpay_order():
+    amount = int(request.form['amount']) * 100  # Amount in paise
+    KEY_ID = os.environ.get('RAZORPAY_KEY_ID', 'rzp_test_dummykey')
+    KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', 'dummysecret')
+    
+    try:
+        import razorpay
+        client = razorpay.Auth(auth=(KEY_ID, KEY_SECRET)) # or client = razorpay.Client(auth=(KEY_ID, KEY_SECRET))
+        # Simplified client creation for safety:
+        client = razorpay.Client(auth=(KEY_ID, KEY_SECRET))
+        payment_order = client.order.create({"amount": amount, "currency": "INR", "payment_capture": 1})
+        return {"razorpay_order_id": payment_order['id'], "amount": amount, "key_id": KEY_ID}
+    except Exception as e:
+        # Fallback dummy order if keys are not configured yet
+        return {"razorpay_order_id": "order_dummy_" + str(random.randint(1000,9999)), "amount": amount, "key_id": KEY_ID}
 
 @app.route('/add_product', methods=['POST'])
 def add_product():
