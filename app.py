@@ -56,7 +56,10 @@ def init_db():
     conn.commit()
     conn.close()
 
-REPLACE_STORE_TEMPLATE = """
+# ॲप सुरू होताच डेटाबेस टेबल आपोआप तयार होईल
+init_db()
+
+FINAL_STORE_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -143,9 +146,8 @@ REPLACE_STORE_TEMPLATE = """
         .orders-table th { background: var(--primary); color: var(--white); }
         .action-link { padding: 4px 8px; border-radius: 4px; color: white; text-decoration: none; font-weight: bold; font-size: 11px; margin-right: 3px; display: inline-block; margin-bottom: 2px; }
         .btn-edit { background: #3498db; }
-        .btn-replace { background: #e67e22; }
+        .btn-status { background: #9b59b6; }
         .btn-verify { background: #2ed573; }
-        .btn-cancel { background: #95a5a6; font-size: 10px; } /* Hidden/Subdued Cancel button */
 
         .section-title { color: var(--primary); font-size: 24px; margin-bottom: 15px; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
 
@@ -216,7 +218,7 @@ REPLACE_STORE_TEMPLATE = """
     </header>
 
     <div class="marquee-banner" id="txtMarquee">
-        🔥 Ultimate Store Live! Replace/Exchange & OTP COD Verification Active 🔥
+        🔥 Ultimate Store Live! Live Location Tracking & Order Stages Active 🔥
     </div>
 
     <div class="layout-container">
@@ -259,10 +261,10 @@ REPLACE_STORE_TEMPLATE = """
             
             <div class="utility-grid">
                 <div class="utility-box">
-                    <h3 id="txtTrackHeader" style="color:var(--dark); font-size:15px;">📦 Track, Replace or Edit Order</h3>
+                    <h3 id="txtTrackHeader" style="color:var(--dark); font-size:15px;">📦 Live Order Tracking & Location</h3>
                     <div style="display:flex; gap:6px;">
                         <input type="text" id="trackInput" placeholder="Order ID (e.g. LS1023)">
-                        <button onclick="trackOrder()" id="txtTrackBtn">Track / Action</button>
+                        <button onclick="trackOrder()" id="txtTrackBtn">Track Live</button>
                     </div>
                 </div>
                 <div class="utility-box" style="border-left-color: #2ed573; display:flex; flex-direction:column; justify-content:center;">
@@ -342,16 +344,16 @@ REPLACE_STORE_TEMPLATE = """
                     </form>
                 </div>
 
-                <h4 id="txtLiveOrdersHead" style="color:var(--dark); margin-bottom:10px;">📋 Live Customer Orders (Verify OTP & Manage Replacements)</h4>
+                <h4 id="txtLiveOrdersHead" style="color:var(--dark); margin-bottom:10px;">📋 Live Customer Orders</h4>
                 <div class="orders-table-container">
                     <table class="orders-table">
                         <thead>
                             <tr>
                                 <th>Order ID</th>
-                                <th>Customer & Mobile</th>
+                                <th>Customer & Location</th>
                                 <th>Product Details</th>
                                 <th>Payment & OTP</th>
-                                <th>Status / Reason</th>
+                                <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -359,13 +361,13 @@ REPLACE_STORE_TEMPLATE = """
                             {% for o in orders %}
                             <tr>
                                 <td><b>{{ o[1] }}</b></td>
-                                <td>{{ o[6] }}<br>{{ o[7] }}<br><small>{{ o[8] }}</small></td>
+                                <td><b>{{ o[6] }}</b><br>{{ o[7] }}<br><small style="color:#d35400;">📍 {{ o[8] }}</small></td>
                                 <td>{{ o[2] }}<br><b>Size:</b> {{ o[3] }} | <b>Color:</b> <span style="display:inline-block; width:10px; height:10px; background:{{ o[4] }}; border-radius:50%; vertical-align:middle;"></span><br><b>₹{{ o[5] }}</b></td>
                                 <td><b>{{ o[9] }}</b><br><span style="background:#3498db; color:white; padding:2px 6px; border-radius:4px; font-size:11px;">OTP: {{ o[11] }}</span></td>
-                                <td><b>{{ o[10] }}</b><br><small style="color:#e67e22;">Reason: {{ o[12] }}</small></td>
+                                <td><span style="background:#e67e22; color:white; padding:3px 6px; border-radius:4px; font-size:11px;"><b>{{ o[10] }}</b></span></td>
                                 <td>
-                                    <a href="#" class="action-link btn-verify" onclick="verifyOTP('{{ o[1] }}', '{{ o[11] }}')">Verify OTP</a>
-                                    <a href="#" class="action-link btn-cancel" onclick="returnOrder('{{ o[1] }}')">Replace/Return</a>
+                                    <a href="#" class="action-link btn-status" onclick="updateOrderStatus('{{ o[1] }}')">Update</a>
+                                    <a href="#" class="action-link btn-verify" onclick="verifyOTP('{{ o[1] }}', '{{ o[11] }}')">Verify</a>
                                 </td>
                             </tr>
                             {% else %}
@@ -377,7 +379,7 @@ REPLACE_STORE_TEMPLATE = """
                     </table>
                 </div>
 
-                <h4 id="txtManageProdHead" style="color:var(--dark); margin:20px 0 10px 0;">📦 Manage & Correct Store Products</h4>
+                <h4 id="txtManageProdHead" style="color:var(--dark); margin:20px 0 10px 0;">📦 Manage Store Products</h4>
                 <div class="orders-table-container">
                     <table class="orders-table">
                         <thead>
@@ -405,8 +407,7 @@ REPLACE_STORE_TEMPLATE = """
                                 <td><b>{{ p[5] }} left</b></td>
                                 <td>₹{{ p[4] }}</td>
                                 <td>
-                                    <a href="#" class="action-link btn-edit" onclick="openEditProductModal('{{ p[0] }}', '{{ p[1] }}', '{{ p[4] }}', '{{ p[5] }}', '{{ p[6] }}', '{{ p[7] }}')">Edit</a>
-                                    <a href="/delete_product/{{ p[0] }}" class="action-link btn-cancel" onclick="return confirm('Delete this product?')">Delete</a>
+                                    <a href="/delete_product/{{ p[0] }}" class="action-link" style="background:#ff4757;" onclick="return confirm('Delete?')">Delete</a>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -534,54 +535,11 @@ REPLACE_STORE_TEMPLATE = """
         </div>
     </div>
 
-    <!-- Replace / Exchange Modal with Authentic Reasons -->
-    <div class="modal" id="returnModal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal('returnModal')">&times;</span>
-            <h3 style="color:var(--primary); margin-bottom:8px;">🔄 Replace / Exchange Order Request</h3>
-            <form action="/process_return" method="POST">
-                <input type="hidden" name="order_id" id="returnOrderIdField">
-                <label style="font-size:12px; font-weight:bold;">Select Return / Replace Reason (कारण निवडा):</label>
-                <select name="reason" required style="width:100%; padding:10px; margin:8px 0; border:1px solid #ddd; border-radius:6px;">
-                    <option value="Damaged Product (वस्तू खराब / डॅमेज आहे - Replace)">Damaged Product (वस्तू खराब / डॅमेज आहे)</option>
-                    <option value="Wrong Size Issue (साईज योग्य नाही - Exchange Size)">Wrong Size Issue (साईज योग्य नाही)</option>
-                    <option value="Not Satisfied / Color Issue (आवडली नाही / कलर प्रॉब्लेम)">Not Satisfied / Color Issue (आवडली नाही / कलर प्रॉब्लेम)</option>
-                    <option value="Other Issue (इतर अडचण)">Other Issue (इतर अडचण)</option>
-                </select>
-                <button type="submit" class="confirm-btn" style="background:#e67e22;">Submit Replace Request</button>
-            </form>
-        </div>
-    </div>
-
-    <div class="modal" id="productEditModal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal('productEditModal')">&times;</span>
-            <h3 style="color:var(--primary); margin-bottom:8px;">✏️ Correct / Edit Product Details</h3>
-            <form action="/update_product" method="POST" enctype="multipart/form-data">
-                <input type="hidden" name="prod_id" id="editProdId">
-                <label style="font-size:12px; font-weight:bold;">Product Name:</label>
-                <input type="text" name="name" id="editProdName" required>
-                <label style="font-size:12px; font-weight:bold;">Price (₹):</label>
-                <input type="number" name="price" id="editProdPrice" required>
-                <label style="font-size:12px; font-weight:bold;">Stock Quantity:</label>
-                <input type="number" name="stock" id="editProdStock" required>
-                <label style="font-size:12px; font-weight:bold;">Sizes:</label>
-                <input type="text" name="sizes" id="editProdSizes" required>
-                <label style="font-size:12px; font-weight:bold;">Color Code:</label>
-                <input type="text" name="colors" id="editProdColors" required>
-                <label style="font-size:12px; font-weight:bold; margin-top:5px; display:block;">Change Photo (Optional):</label>
-                <input type="file" name="product_image" accept="image/*">
-                <button type="submit" class="confirm-btn">Save Product Corrections</button>
-            </form>
-        </div>
-    </div>
-
     <footer>
         <button class="footer-about-btn" onclick="openAboutModal()">ℹ️ About Our Store & Services</button>
         <p>&copy; 2026 Little Star Readymade Kids Wear, Beed. All Rights Reserved.</p>
     </footer>
 
-    <!-- About Us Modal -->
     <div class="modal" id="aboutModal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('aboutModal')">&times;</span>
@@ -590,7 +548,7 @@ REPLACE_STORE_TEMPLATE = """
                 <strong>Little Star Readymade Kids Wear (Beed)</strong> brings you the finest and most trending festive and daily wear collection for newborns, kids (0 size to 15 years), along with exclusive Ladies and Gents readymade garments.
             </p>
             <p style="font-size:13px; color:#555; line-height:1.6; margin-bottom:10px;">
-                <strong>Our Digital Services:</strong> We offer a seamless online shopping experience with instant WhatsApp order slips, live inventory tracking, secure digital payments via PhonePe/UPI (9405691878), and Cash on Delivery (COD) with OTP verification and easy replacement support!
+                <strong>Our Digital Services:</strong> Seamless online shopping with instant WhatsApp order slips, real-time live location & stage tracking, secure digital payments via PhonePe/UPI (9405691878), and Cash on Delivery (COD) with OTP verification!
             </p>
             <button onclick="closeModal('aboutModal')" class="confirm-btn" style="background:#2f3542;">Close</button>
         </div>
@@ -709,9 +667,9 @@ REPLACE_STORE_TEMPLATE = """
                 fetch('/save_order', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `order_id=${orderId}&product_name=${currentProduct.name}&size=${size}&color=${color}&price=${currentProduct.price}&customer_name=${name}&mobile=${mobile}&address=${address}&payment=${payment}&status=Pending Delivery OTP&otp=${generatedOtp}`
+                    body: `order_id=${orderId}&product_name=${currentProduct.name}&size=${size}&color=${color}&price=${currentProduct.price}&customer_name=${name}&mobile=${mobile}&address=${address}&payment=${payment}&status=1. Order Placed & Packed (Beed Store)&otp=${generatedOtp}`
                 }).then(() => {
-                    let invoiceSlip = `⭐ OFFICIAL INVOICE & ORDER SLIP ⭐%0A-----------------------------------%0AOrder ID: *${orderId}*%0AProduct: ${currentProduct.name}%0A*Size: ${size}*%0A*Payment: ${payment}*%0A🔒 *Delivery OTP: ${generatedOtp}*%0A-----------------------------------%0ACustomer: ${name}%0AMobile: ${mobile}%0AAddress: ${address}%0A-----------------------------------%0A*Little Star Readymade Kids Wear, Beed*`;
+                    let invoiceSlip = `⭐ OFFICIAL INVOICE & ORDER SLIP ⭐%0A-----------------------------------%0AOrder ID: *${orderId}*%0AProduct: ${currentProduct.name}%0A*Size: ${size}*%0A*Payment: ${payment}*%0A🔒 *Delivery OTP: ${generatedOtp}*%0A📍 *Location: Beed Store*_%0A-----------------------------------%0ACustomer: ${name}%0AMobile: ${mobile}%0AAddress: ${address}%0A-----------------------------------%0A*Little Star Readymade Kids Wear, Beed*`;
                     
                     window.open(`https://wa.me/919405691878?text=${invoiceSlip}`, '_blank');
                     alert("Order Placed! Your Delivery OTP is: " + generatedOtp);
@@ -730,9 +688,12 @@ REPLACE_STORE_TEMPLATE = """
             }
         }
 
-        function returnOrder(orderId) {
-            document.getElementById('returnOrderIdField').value = orderId;
-            document.getElementById('returnModal').style.display = 'flex';
+        function updateOrderStatus(orderId) {
+            let newStage = prompt("Update Order Stage (e.g. 2. Out for Delivery in Beed / 3. Delivered & Completed):", "2. Out for Delivery in Beed");
+            let newLocation = prompt("Update Current Location (e.g. Karanja Road, Beed):", "Karanja Road, Beed");
+            if(newStage && newLocation) {
+                window.location.href = `/update_order_stage/${orderId}/${encodeURIComponent(newStage)}/${encodeURIComponent(newLocation)}`;
+            }
         }
 
         function trackOrder() {
@@ -742,10 +703,7 @@ REPLACE_STORE_TEMPLATE = """
                 .then(res => res.json())
                 .then(data => {
                     if(data.success) {
-                        let actionPrompt = confirm("📦 Order Found!\\nOrder ID: " + data.order_id + "\\nProduct: " + data.product + "\\nStatus: " + data.status + "\\n\\nDo you want to request a Replace / Exchange for this order?");
-                        if(actionPrompt) {
-                            returnOrder(data.order_id);
-                        }
+                        alert("📦 Live Order Tracking Report:\\n\\nOrder ID: " + data.order_id + "\\nProduct: " + data.product + "\\n📍 Current Location: " + data.location + "\\n🚀 Current Stage: " + data.status + "\\n🔒 Delivery OTP: " + data.otp);
                     } else {
                         alert("❌ Order ID not found!");
                     }
@@ -753,16 +711,6 @@ REPLACE_STORE_TEMPLATE = """
             } else {
                 alert("Please enter a valid Order ID.");
             }
-        }
-
-        function openEditProductModal(id, name, price, stock, sizes, colors) {
-            document.getElementById('editProdId').value = id;
-            document.getElementById('editProdName').value = name;
-            document.getElementById('editProdPrice').value = price;
-            document.getElementById('editProdStock').value = stock;
-            document.getElementById('editProdSizes').value = sizes;
-            document.getElementById('editProdColors').value = colors;
-            document.getElementById('productEditModal').style.display = 'flex';
         }
     </script>
 </body>
@@ -778,10 +726,10 @@ def index():
     cursor.execute('SELECT * FROM orders ORDER BY id DESC')
     orders = cursor.fetchall()
     
-    total_revenue = sum(o[5] for o in orders if o[10] == 'Delivered & Completed')
+    total_revenue = sum(o[5] for o in orders if 'Delivered' in o[10])
     
     conn.close()
-    return render_template_string(REPLACE_STORE_TEMPLATE, products=products, orders=orders, total_revenue=total_revenue)
+    return render_template_string(FINAL_STORE_TEMPLATE, products=products, orders=orders, total_revenue=total_revenue)
 
 @app.route('/add_product', methods=['POST'])
 def add_product():
@@ -806,32 +754,6 @@ def add_product():
         INSERT INTO products (name, category, subcategory, price, stock, sizes, colors, image) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ''', (name, category, subcategory, price, stock, sizes, colors, image_filename))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('index'))
-
-@app.route('/update_product', methods=['POST'])
-def update_product():
-    prod_id = request.form['prod_id']
-    name = request.form['name']
-    price = request.form['price']
-    stock = request.form['stock']
-    sizes = request.form['sizes']
-    colors = request.form['colors']
-    
-    conn = sqlite3.connect('littlestar.db')
-    cursor = conn.cursor()
-    
-    if 'product_image' in request.files:
-        file = request.files['product_image']
-        if file.filename != '':
-            image_filename = file.filename
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
-            cursor.execute('UPDATE products SET name=?, price=?, stock=?, sizes=?, colors=?, image=? WHERE id=?', 
-                           (name, price, stock, sizes, colors, image_filename, prod_id))
-        else:
-            cursor.execute('UPDATE products SET name=?, price=?, stock=?, sizes=?, colors=? WHERE id=?', 
-                           (name, price, stock, sizes, colors, prod_id))
     conn.commit()
     conn.close()
     return redirect(url_for('index'))
@@ -879,8 +801,8 @@ def save_order():
     cursor = conn.cursor()
     cursor.execute('''
         INSERT INTO orders (order_id, product_name, size, color, price, customer_name, mobile, address, payment, status, otp, return_reason)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'None')
-    ''', (order_id, product_name, size, color, price, customer_name, mobile, address, payment, status, otp))
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (order_id, product_name, size, color, price, customer_name, mobile, address, payment, status, otp, address))
     
     cursor.execute('UPDATE products SET stock = stock - 1 WHERE name = ? AND stock > 0', (product_name,))
     
@@ -896,7 +818,7 @@ def verify_order_otp(order_id, entered_otp):
     row = cursor.fetchone()
     
     if row and row[0] == entered_otp:
-        cursor.execute('UPDATE orders SET status = "Delivered & Completed" WHERE order_id = ?', (order_id,))
+        cursor.execute('UPDATE orders SET status = "3. Delivered & Completed" WHERE order_id = ?', (order_id,))
         conn.commit()
         conn.close()
         return redirect(url_for('index'))
@@ -904,14 +826,11 @@ def verify_order_otp(order_id, entered_otp):
         conn.close()
         return "<script>alert('❌ Incorrect OTP! Delivery could not be verified.'); window.location.href='/';</script>"
 
-@app.route('/process_return', methods=['POST'])
-def process_return():
-    order_id = request.form['order_id']
-    reason = request.form['reason']
-
+@app.route('/update_order_stage/<order_id>/<stage>/<location>')
+def update_order_stage(order_id, stage, location):
     conn = sqlite3.connect('littlestar.db')
     cursor = conn.cursor()
-    cursor.execute('UPDATE orders SET status = "Requested Replace / Return", return_reason = ? WHERE order_id = ?', (reason, order_id))
+    cursor.execute('UPDATE orders SET status = ?, return_reason = ? WHERE order_id = ?', (stage, location, order_id))
     conn.commit()
     conn.close()
     return redirect(url_for('index'))
@@ -920,14 +839,13 @@ def process_return():
 def track(order_id):
     conn = sqlite3.connect('littlestar.db')
     cursor = conn.cursor()
-    cursor.execute('SELECT order_id, product_name, status, customer_name, payment, size, color, otp FROM orders WHERE order_id = ?', (order_id,))
+    cursor.execute('SELECT order_id, product_name, status, customer_name, payment, size, color, otp, return_reason FROM orders WHERE order_id = ?', (order_id,))
     order = cursor.fetchone()
     conn.close()
     if order:
-        return {"success": True, "order_id": order[0], "product": order[1], "status": order[2], "name": order[3], "payment": order[4], "size": order[5], "color": order[6], "otp": order[7]}
+        return {"success": True, "order_id": order[0], "product": order[1], "status": order[2], "name": order[3], "payment": order[4], "size": order[5], "color": order[6], "otp": order[7], "location": order[8]}
     else:
         return {"success": False}
 
 if __name__ == '__main__':
-    init_db()
     app.run()
