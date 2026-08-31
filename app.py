@@ -96,7 +96,6 @@ FINAL_STORE_TEMPLATE = """
         .user-reg-btn { background: var(--white); color: var(--primary); border: none; padding: 10px 18px; border-radius: 25px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: 0.3s; }
         .user-reg-btn:hover { background: #ffa502; color: var(--white); }
 
-        /* 👉 नवीन डिझाइन केलेले अप्रतिम शेअर बटण */
         .share-web-btn { background: #25d366; color: white; border: none; padding: 10px 18px; border-radius: 25px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: 0.3s; text-decoration: none; font-size: 14px; }
         .share-web-btn:hover { background: #1ebe5d; transform: translateY(-2px); }
 
@@ -169,15 +168,15 @@ FINAL_STORE_TEMPLATE = """
         .stock-badge.low { background: #ffa502; }
         .stock-badge.out { background: #ff4757; }
 
-        .product-img-box { width: 100%; height: 160px; background: #f8f9fa; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; margin: 12px 0; border: 1px solid #eee; cursor: pointer; }
-        .product-img-box img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
-        .product-img-box img:hover { transform: scale(1.08); }
+        /* 👉 सुधारित लहान आणि सुंदर प्रॉडक्ट फोटो बॉक्स */
+        .product-img-box { width: 100%; height: 180px; background: #f8f9fa; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; margin: 12px 0; border: 1px solid #eee; cursor: pointer; }
+        .product-img-box img { width: 100%; height: 100%; object-fit: contain; transition: transform 0.3s; }
+        .product-img-box img:hover { transform: scale(1.05); }
 
         .price { color: var(--primary); font-weight: bold; font-size: 20px; margin: 8px 0; }
         
         .tags-container { display: flex; justify-content: center; gap: 5px; flex-wrap: wrap; margin: 6px 0; }
         .size-badge { background: #f1f2f6; border: 1px solid #ced6e0; padding: 3px 8px; font-size: 11px; border-radius: 4px; font-weight: bold; color: var(--dark); }
-        .color-dot { width: 18px; height: 18px; border-radius: 50%; display: inline-block; border: 1px solid #bbb; box-shadow: 0 2px 3px rgba(0,0,0,0.1); }
 
         .btn-group { display: flex; gap: 6px; margin-top: 12px; }
         .cart-btn { background: #ffa502; color: var(--white); border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1; font-size: 12px; }
@@ -189,9 +188,6 @@ FINAL_STORE_TEMPLATE = """
         .close-btn { position: absolute; top: 12px; right: 18px; font-size: 24px; cursor: pointer; color: #777; }
         .modal-content input, .modal-content select { width: 100%; padding: 10px; margin: 6px 0; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; outline: none; }
         .modal-content button.confirm-btn { background: var(--primary); color: var(--white); border: none; padding: 12px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 12px; font-size: 15px; }
-
-        .upi-box { background: #e8f8f5; border: 1px solid #2ed573; padding: 12px; border-radius: 8px; margin: 10px 0; display: block; text-align: center; }
-        .upi-box p { font-size: 13px; color: var(--dark); font-weight: bold; }
 
         .footer-about-btn { background: #ffa502; color: white; border: none; padding: 10px 25px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 14px; margin-bottom: 12px; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .footer-about-btn:hover { background: #ff4757; }
@@ -215,10 +211,7 @@ FINAL_STORE_TEMPLATE = """
             <p>0 Size te 15 Varsh | Ladies & Gents Special Collection</p>
         </div>
         <div class="header-actions">
-            <!-- 👉 अप्रतिम आणि उठून दिसणारे शेअर स्टोअर बटण (Header मध्ये) -->
-            <button class="share-web-btn" onclick="shareStoreWebsite()">
-                📲 Share Website
-            </button>
+            <button class="share-web-btn" onclick="shareStoreWebsite()">📲 Share Website</button>
 
             {% if session.get('user_mobile') %}
                 <span style="background:rgba(255,255,255,0.2); padding:8px 14px; border-radius:20px; font-size:13px; font-weight:bold;">👤 Hi, {{ session.get('user_name') }}</span>
@@ -235,7 +228,7 @@ FINAL_STORE_TEMPLATE = """
     </header>
 
     <div class="marquee-banner">
-        🔥 Ultimate Store Live! Direct One-Click Website Sharing & Razorpay Online Active 🔥
+        🔥 Ultimate Store Live! Neat Product Cards & Dynamic Coupons Active 🔥
     </div>
 
     <div class="layout-container">
@@ -286,7 +279,7 @@ FINAL_STORE_TEMPLATE = """
                 </div>
                 <div class="utility-box" style="border-left-color: #25d366;">
                     <h3 style="color:var(--dark); font-size:15px;">📲 Direct WhatsApp Share</h3>
-                    <a href="https://wa.me/?text=⭐%20Little%20Star%20Readymade%20Kids%20Wear,%20Beed%20⭐%0ANew%20Festive%20Collection%200%20to%2015%20Years,%20Ladies%20&%20Gents%20Wear%20is%20now%20Live%20Online!%20Check%20here:%20https://littlestar-store.onrender.com" target="_blank" style="display:inline-block; margin-top:8px; background:#25d366; color:white; padding:8px 14px; border-radius:6px; font-size:13px; font-weight:bold; text-decoration:none;">Share on WhatsApp 💬</a>
+                    <a href="https://wa.me/?text=⭐%20Little%20Star%20Readymade%20Kids%20Wear,%20Beed%20⭐%0ANew%20Festive%20Collection%20Live%20Now!%20Check%20here:%20https://littlestar-store.onrender.com" target="_blank" style="display:inline-block; margin-top:8px; background:#25d366; color:white; padding:8px 14px; border-radius:6px; font-size:13px; font-weight:bold; text-decoration:none;">Share on WhatsApp 💬</a>
                 </div>
                 <div class="utility-box" style="border-left-color: #ffa502; display:flex; flex-direction:column; justify-content:center;">
                     <button class="admin-toggle-btn" onclick="toggleAdminPanel()">🔒 Owner Dashboard</button>
@@ -523,7 +516,7 @@ FINAL_STORE_TEMPLATE = """
     <div class="modal" id="checkoutModal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('checkoutModal')">&times;</span>
-            <h3 style="color:var(--primary); margin-bottom:8px;">⚡ Instant Order & Discount Coupon</h3>
+            <h3 style="color:var(--primary); margin-bottom:8px;">⚡ Instant Order Checkout</h3>
             <p id="chkSummary" style="font-weight:bold; margin-bottom:12px; color:var(--dark);"></p>
             
             <label style="font-size:12px; font-weight:bold;">Select Exact Size:</label>
@@ -533,11 +526,17 @@ FINAL_STORE_TEMPLATE = """
             <input type="text" id="buyerMobile" value="{{ session.get('user_mobile', '') }}" placeholder="Mobile Number / मोबाईल नंबर" required>
             <input type="text" id="buyerAddress" placeholder="Delivery Address / पत्ता (Beed)" required>
             
-            <div style="display:flex; gap:6px; margin:8px 0;">
-                <input type="text" id="couponCodeInput" placeholder="Enter Coupon (e.g. DIWALI20)" style="margin:0;">
-                <button type="button" onclick="applyCoupon()" style="background:#ffa502; color:white; border:none; padding:8px 12px; border-radius:6px; font-weight:bold; cursor:pointer;">Apply</button>
+            <!-- 👉 कूपन्स उपलब्ध असतील तरच कूपन बॉक्स दिसेल -->
+            {% if coupons|length > 0 %}
+            <div style="background:#f8f9fa; padding:10px; border-radius:6px; margin:8px 0; border:1px solid #ddd;">
+                <label style="font-size:12px; font-weight:bold; color:var(--primary);">Have a Coupon Code?</label>
+                <div style="display:flex; gap:6px; margin-top:4px;">
+                    <input type="text" id="couponCodeInput" placeholder="Enter Coupon Code" style="margin:0;">
+                    <button type="button" onclick="applyCoupon()" style="background:#ffa502; color:white; border:none; padding:8px 12px; border-radius:6px; font-weight:bold; cursor:pointer;">Apply</button>
+                </div>
+                <small id="couponMsg" style="color:#2ed573; font-weight:bold; display:block; margin-top:4px;"></small>
             </div>
-            <small id="couponMsg" style="color:#2ed573; font-weight:bold; display:block; margin-bottom:8px;"></small>
+            {% endif %}
 
             <label style="font-size:12px; font-weight:bold; display:block; margin-top:4px;">Select Payment Option:</label>
             <select id="paymentMode">
@@ -571,7 +570,6 @@ FINAL_STORE_TEMPLATE = """
         let currentProductPrice = 0;
         let discountMultiplier = 1;
 
-        // 👉 थेट एका क्लिकवर मोबाईलमधून वेबसाईट लिंक शेअर करणारे फंक्शन
         function shareStoreWebsite() {
             if (navigator.share) {
                 navigator.share({
@@ -643,8 +641,12 @@ FINAL_STORE_TEMPLATE = """
             currentProductPrice = parseInt(price);
             discountMultiplier = 1;
             document.getElementById('chkSummary').innerText = name + " - ₹" + price;
-            document.getElementById('couponCodeInput').value = "";
-            document.getElementById('couponMsg').innerText = "";
+            
+            let couponInput = document.getElementById('couponCodeInput');
+            if(couponInput) {
+                couponInput.value = "";
+                document.getElementById('couponMsg').innerText = "";
+            }
 
             let sizeSelect = document.getElementById('sizeDropdown');
             sizeSelect.innerHTML = sizes.split(',').map(s => `<option value="${s.trim()}">${s.trim()}</option>`).join('');
@@ -653,7 +655,9 @@ FINAL_STORE_TEMPLATE = """
         }
 
         function applyCoupon() {
-            let code = document.getElementById('couponCodeInput').value.trim();
+            let codeInput = document.getElementById('couponCodeInput');
+            if(!codeInput) return;
+            let code = codeInput.value.trim();
             if(code) {
                 fetch('/check_coupon/' + code)
                 .then(res => res.json())
@@ -764,6 +768,8 @@ def index():
     products = cursor.fetchall()
     cursor.execute('SELECT * FROM orders ORDER BY id DESC')
     orders = cursor.fetchall()
+    cursor.execute('SELECT * FROM coupons')
+    coupons = cursor.fetchall()
     
     user_mobile = session.get('user_mobile')
     user_orders = []
@@ -773,7 +779,7 @@ def index():
         
     total_revenue = sum(o[5] for o in orders if 'Delivered' in o[10])
     conn.close()
-    return render_template_string(FINAL_STORE_TEMPLATE, products=products, orders=orders, user_orders=user_orders, total_revenue=total_revenue)
+    return render_template_string(FINAL_STORE_TEMPLATE, products=products, orders=orders, coupons=coupons, user_orders=user_orders, total_revenue=total_revenue)
 
 @app.route('/login_user', methods=['POST'])
 def login_user():
