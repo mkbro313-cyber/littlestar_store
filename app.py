@@ -56,7 +56,6 @@ def init_db():
     conn.commit()
     conn.close()
 
-# ॲप सुरू होताच डेटाबेस टेबल आपोआप तयार होईल
 init_db()
 
 FINAL_STORE_TEMPLATE = """
@@ -201,15 +200,11 @@ FINAL_STORE_TEMPLATE = """
 
     <header>
         <div class="logo">
-            <h1 id="txtTitle">⭐ Little Star Readymade Kids Wear ⭐</h1>
-            <p id="txtSubTitle">0 Size te 15 Varsh | Ladies & Gents Special Collection</p>
+            <h1>⭐ Little Star Readymade Kids Wear ⭐</h1>
+            <p>0 Size te 15 Varsh | Ladies & Gents Special Collection</p>
         </div>
         <div class="header-actions">
-            <select class="lang-select" id="langSwitcher" onchange="switchLanguage(this.value)">
-                <option value="en">English</option>
-                <option value="hi">हिंदी (Hindi)</option>
-            </select>
-            <button class="user-reg-btn" id="btnReg" onclick="openRegModal()">👤 Register / VIP Club</button>
+            <button class="user-reg-btn" onclick="openRegModal()">👤 Register / VIP Club</button>
             <div class="search-box">
                 <input type="text" id="searchInput" placeholder="Search collection..." onkeyup="searchProducts()">
                 <button onclick="searchProducts()">🔍</button>
@@ -217,21 +212,21 @@ FINAL_STORE_TEMPLATE = """
         </div>
     </header>
 
-    <div class="marquee-banner" id="txtMarquee">
-        🔥 Ultimate Store Live! Live Location Tracking & Order Stages Active 🔥
+    <div class="marquee-banner">
+        🔥 Ultimate Store Live! Automated WhatsApp & Live Tracking Active 🔥
     </div>
 
     <div class="layout-container">
         
         <aside class="sidebar">
-            <h3 id="txtCategories">🛍️ Categories & Filters</h3>
+            <h3>🛍️ Categories & Filters</h3>
             
-            <div class="menu-category" id="txtAllColl">🌟 All Collections</div>
+            <div class="menu-category">🌟 All Collections</div>
             <ul class="menu-items">
-                <li><button class="menu-link active" onclick="filterMenu('All', 'All')" id="txtShowAll">Show All Products</button></li>
+                <li><button class="menu-link active" onclick="filterMenu('All', 'All')">Show All Products</button></li>
             </ul>
 
-            <div class="menu-category" id="txtBoysColl">👦 Boys Wear Collection</div>
+            <div class="menu-category">👦 Boys Wear Collection</div>
             <ul class="menu-items">
                 <li><button class="menu-link" onclick="filterMenu('Boys', 'Shirt')">🔹 Shirts</button></li>
                 <li><button class="menu-link" onclick="filterMenu('Boys', 'Pant')">🔹 Pants</button></li>
@@ -241,7 +236,7 @@ FINAL_STORE_TEMPLATE = """
                 <li><button class="menu-link" onclick="filterMenu('Boys', 'Jacket')">🔹 Jackets & Blazers</button></li>
             </ul>
 
-            <div class="menu-category" id="txtGirlsColl">👧 Girls Wear Collection</div>
+            <div class="menu-category">👧 Girls Wear Collection</div>
             <ul class="menu-items">
                 <li><button class="menu-link" onclick="filterMenu('Girls', 'Frock')">🔸 Frocks & Dresses</button></li>
                 <li><button class="menu-link" onclick="filterMenu('Girls', 'Lehenga')">🔸 Lehenga Choli</button></li>
@@ -250,30 +245,30 @@ FINAL_STORE_TEMPLATE = """
                 <li><button class="menu-link" onclick="filterMenu('Girls', 'Kurti')">🔸 Kurti & Leggings</button></li>
             </ul>
 
-            <div class="menu-category" id="txtLadiesGents">👗 Ladies & Gents</div>
+            <div class="menu-category">👗 Ladies & Gents</div>
             <ul class="menu-items">
                 <li><button class="menu-link" onclick="filterMenu('Ladies', 'All')">👗 Ladies Special</button></li>
                 <li><button class="menu-link" onclick="filterMenu('Gents', 'All')">👔 Gents Wear</button></li>
             </ul>
-        </sidebar>
+        </aside>
 
         <main class="content-area">
             
             <div class="utility-grid">
                 <div class="utility-box">
-                    <h3 id="txtTrackHeader" style="color:var(--dark); font-size:15px;">📦 Live Order Tracking & Location</h3>
+                    <h3 style="color:var(--dark); font-size:15px;">📦 Live Order Tracking & Location</h3>
                     <div style="display:flex; gap:6px;">
                         <input type="text" id="trackInput" placeholder="Order ID (e.g. LS1023)">
-                        <button onclick="trackOrder()" id="txtTrackBtn">Track Live</button>
+                        <button onclick="trackOrder()">Track Live</button>
                     </div>
                 </div>
                 <div class="utility-box" style="border-left-color: #2ed573; display:flex; flex-direction:column; justify-content:center;">
-                    <button class="admin-toggle-btn" onclick="toggleAdminPanel()" id="txtAdminBtn">🔒 Shop Owner Dashboard & Analytics</button>
+                    <button class="admin-toggle-btn" onclick="toggleAdminPanel()">🔒 Shop Owner Dashboard & Analytics</button>
                 </div>
             </div>
 
             <div class="admin-panel" id="adminPanel">
-                <h3 id="txtAdminDashboard">📊 Shop Owner Management Dashboard & Revenue</h3>
+                <h3>📊 Shop Owner Management Dashboard & Revenue</h3>
                 
                 <div class="analytics-card">
                     <div>
@@ -287,7 +282,7 @@ FINAL_STORE_TEMPLATE = """
                 </div>
 
                 <div style="background:#f1f2f6; padding:15px; border-radius:8px; margin-bottom:20px;">
-                    <h4 id="txtAddProdHeading" style="color:var(--primary); margin-bottom:10px;">➕ Add Product with Size Builder & Photo</h4>
+                    <h4 style="color:var(--primary); margin-bottom:10px;">➕ Add Product with Size Builder & Photo</h4>
                     <form action="/add_product" method="POST" enctype="multipart/form-data">
                         <div class="form-grid">
                             <input type="text" name="name" placeholder="Product Name (e.g. Designer Kids Shirt)" required>
@@ -315,7 +310,7 @@ FINAL_STORE_TEMPLATE = """
                             <input type="number" name="stock" placeholder="Initial Stock Quantity" required>
                             
                             <div class="size-builder-box">
-                                <label style="font-weight:bold; font-size:13px; color:var(--dark);">📏 Select Sizes (Click buttons to add sizes automatically):</label>
+                                <label style="font-weight:bold; font-size:13px; color:var(--dark);">📏 Select Sizes:</label>
                                 <div class="size-btn-group">
                                     <button type="button" class="size-chip" onclick="addSize('0 Size')">+ 0 Size</button>
                                     <button type="button" class="size-chip" onclick="addSize('1 Year')">+ 1 Year</button>
@@ -335,16 +330,16 @@ FINAL_STORE_TEMPLATE = """
                             </div>
 
                             <div class="color-toolbox-box">
-                                <label style="font-weight:bold; font-size:13px; color:var(--dark);">🎨 Select Product Color from Toolbox:</label>
+                                <label style="font-weight:bold; font-size:13px; color:var(--dark);">🎨 Select Color:</label>
                                 <input type="color" name="colors" value="#ff4757" required>
                                 <span style="font-size:12px; color:#666;">(Click box to pick any color)</span>
                             </div>
                         </div>
-                        <button type="submit" class="publish-btn" id="txtPublishBtn">🚀 Publish Product & Inventory</button>
+                        <button type="submit" class="publish-btn">🚀 Publish Product & Inventory</button>
                     </form>
                 </div>
 
-                <h4 id="txtLiveOrdersHead" style="color:var(--dark); margin-bottom:10px;">📋 Live Customer Orders</h4>
+                <h4 style="color:var(--dark); margin-bottom:10px;">📋 Live Customer Orders</h4>
                 <div class="orders-table-container">
                     <table class="orders-table">
                         <thead>
@@ -379,7 +374,7 @@ FINAL_STORE_TEMPLATE = """
                     </table>
                 </div>
 
-                <h4 id="txtManageProdHead" style="color:var(--dark); margin:20px 0 10px 0;">📦 Manage Store Products</h4>
+                <h4 style="color:var(--dark); margin:20px 0 10px 0;">📦 Manage Store Products</h4>
                 <div class="orders-table-container">
                     <table class="orders-table">
                         <thead>
@@ -417,7 +412,7 @@ FINAL_STORE_TEMPLATE = """
 
             </div>
 
-            <h2 class="section-title" id="sectionTitleHeading">Live Store Collection</h2>
+            <h2 class="section-title">Live Store Collection</h2>
 
             <div class="products-grid" id="productGrid">
                 {% for p in products %}
@@ -443,7 +438,7 @@ FINAL_STORE_TEMPLATE = """
                     <h4>{{ p[1] }}</h4>
                     <div class="price">₹ {{ p[4] }}</div>
                     
-                    <div style="font-size:12px; color:#666; margin-top:4px;" class="lblSizes">Available Sizes:</div>
+                    <div style="font-size:12px; color:#666; margin-top:4px;">Available Sizes:</div>
                     <div class="tags-container">
                         {% for size in p[6].split(',') %}
                             <span class="size-badge">{{ size.strip() }}</span>
@@ -451,7 +446,7 @@ FINAL_STORE_TEMPLATE = """
                     </div>
 
                     {% if p[7] and p[7].strip() != '' %}
-                    <div style="font-size:12px; color:#666; margin-top:6px;" class="lblColors">Selected Color:</div>
+                    <div style="font-size:12px; color:#666; margin-top:6px;">Selected Color:</div>
                     <div class="tags-container">
                         <span class="color-dot" style="background:{{ p[7] }};" title="{{ p[7] }}"></span>
                     </div>
@@ -669,10 +664,11 @@ FINAL_STORE_TEMPLATE = """
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: `order_id=${orderId}&product_name=${currentProduct.name}&size=${size}&color=${color}&price=${currentProduct.price}&customer_name=${name}&mobile=${mobile}&address=${address}&payment=${payment}&status=1. Order Placed & Packed (Beed Store)&otp=${generatedOtp}`
                 }).then(() => {
-                    let invoiceSlip = `⭐ OFFICIAL INVOICE & ORDER SLIP ⭐%0A-----------------------------------%0AOrder ID: *${orderId}*%0AProduct: ${currentProduct.name}%0A*Size: ${size}*%0A*Payment: ${payment}*%0A🔒 *Delivery OTP: ${generatedOtp}*%0A📍 *Location: Beed Store*_%0A-----------------------------------%0ACustomer: ${name}%0AMobile: ${mobile}%0AAddress: ${address}%0A-----------------------------------%0A*Little Star Readymade Kids Wear, Beed*`;
+                    // 👉 ऑटोमॅटिक WhatsApp नोटिफिकेशन टेम्पलेट (दुकानदाराच्या 9405691878 वर डायरेक्ट इनव्हॉइस आणि OTP पाठवण्यासाठी)
+                    let invoiceSlip = `⭐ *LITTLE STAR READYMADE KIDS WEAR* ⭐%0A-----------------------------------%0A✅ *New Order Placed!*%0AOrder ID: *${orderId}*%0AProduct: ${currentProduct.name}%0ASize: ${size}%0APrice: ₹${currentProduct.price}%0APayment: ${payment}%0A-----------------------------------%0A🔒 *Delivery OTP: ${generatedOtp}*%0A-----------------------------------%0ACustomer: ${name}%0AMobile: ${mobile}%0AAddress: ${address}%0A-----------------------------------%0A📍 *Store:* Near City Hotel, Karanja Road, Beed`;
                     
                     window.open(`https://wa.me/919405691878?text=${invoiceSlip}`, '_blank');
-                    alert("Order Placed! Your Delivery OTP is: " + generatedOtp);
+                    alert("Order Placed Successfully! Delivery OTP is: " + generatedOtp);
                     closeModal('checkoutModal');
                     location.reload();
                 });
