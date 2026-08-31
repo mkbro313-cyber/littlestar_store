@@ -1,9 +1,10 @@
-from flask import Flask, render_template_string, request, redirect, url_for
+from flask import Flask, render_template_string, request, redirect, url_for, session
 import sqlite3
 import os
 import random
 
 app = Flask(__name__)
+app.secret_key = 'littlestar_super_secret_key'
 UPLOAD_FOLDER = 'static/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -47,10 +48,17 @@ def init_db():
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             full_name TEXT NOT NULL,
-            mobile TEXT NOT NULL,
+            mobile TEXT UNIQUE NOT NULL,
             email TEXT NOT NULL,
             insta TEXT,
             facebook TEXT
+        )
+    ''')
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS coupons (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT UNIQUE NOT NULL,
+            discount_percent INTEGER NOT NULL
         )
     ''')
     conn.commit()
@@ -110,7 +118,7 @@ FINAL_STORE_TEMPLATE = """
 
         .content-area { display: flex; flex-direction: column; gap: 20px; }
 
-        .utility-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
+        .utility-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
         .utility-box { background: var(--white); padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 5px solid var(--primary); }
         .utility-box input { padding: 8px 12px; width: 60%; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; margin-top: 8px; }
         .utility-box button { background: #ffa502; color: var(--white); border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
@@ -188,7 +196,6 @@ FINAL_STORE_TEMPLATE = """
         
         footer { background: var(--dark); color: var(--white); text-align: center; padding: 30px; margin-top: 50px; font-size: 13px; }
     </style>
-    <!-- Razorpay Checkout Script -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
@@ -204,7 +211,12 @@ FINAL_STORE_TEMPLATE = """
             <p>0 Size te 15 Varsh | Ladies & Gents Special Collection</p>
         </div>
         <div class="header-actions">
-            <button class="user-reg-btn" onclick="openRegModal()">👤 Register / VIP Club</button>
+            {% if session.get('user_mobile') %}
+                <span style="background:rgba(255,255,255,0.2); padding:8px 14px; border-radius:20px; font-size:13px; font-weight:bold;">👤 Hi, {{ session.get('user_name') }}</span>
+                <a href="/logout" style="background:#fff; color:#ff4757; padding:8px 14px; border-radius:20px; font-size:13px; font-weight:bold; text-decoration:none;">Logout</a>
+            {% else %}
+                <button class="user-reg-btn" onclick="openRegModal()">👤 Customer Login / VIP</button>
+            {% endif %}
             <div class="search-box">
                 <input type="text" id="searchInput" placeholder="Search collection..." onkeyup="searchProducts()">
                 <button onclick="searchProducts()">🔍</button>
@@ -213,7 +225,7 @@ FINAL_STORE_TEMPLATE = """
     </header>
 
     <div class="marquee-banner">
-        🔥 Ultimate Store Live! Razorpay Online Gateway & Automated WhatsApp Active 🔥
+        🔥 Ultimate Store Live! Advanced Customer Login, Discount Coupons & Razorpay Online Active 🔥
     </div>
 
     <div class="layout-container">
@@ -256,19 +268,58 @@ FINAL_STORE_TEMPLATE = """
             
             <div class="utility-grid">
                 <div class="utility-box">
-                    <h3 style="color:var(--dark); font-size:15px;">📦 Live Order Tracking & Location</h3>
+                    <h3 style="color:var(--dark); font-size:15px;">📦 Live Order Tracking</h3>
                     <div style="display:flex; gap:6px;">
                         <input type="text" id="trackInput" placeholder="Order ID (e.g. LS1023)">
-                        <button onclick="trackOrder()">Track Live</button>
+                        <button onclick="trackOrder()">Track</button>
                     </div>
                 </div>
-                <div class="utility-box" style="border-left-color: #2ed573; display:flex; flex-direction:column; justify-content:center;">
-                    <button class="admin-toggle-btn" onclick="toggleAdminPanel()">🔒 Shop Owner Dashboard & Analytics</button>
+                <div class="utility-box" style="border-left-color: #2ed573;">
+                    <h3 style="color:var(--dark); font-size:15px;">💬 WhatsApp Catalog Share</h3>
+                    <a href="https://wa.me/?text=Check%20out%20Little%20Star%20Readymade%20Kids%20Wear,%20Beed!%20New%20Festive%20Collection%20Live%20Now." target="_blank" style="display:inline-block; margin-top:8px; background:#25d366; color:white; padding:8px 14px; border-radius:6px; font-size:13px; font-weight:bold; text-decoration:none;">Share Catalog 📲</a>
+                </div>
+                <div class="utility-box" style="border-left-color: #ffa502; display:flex; flex-direction:column; justify-content:center;">
+                    <button class="admin-toggle-btn" onclick="toggleAdminPanel()">🔒 Owner Dashboard</button>
                 </div>
             </div>
 
+            {% if session.get('user_mobile') %}
+            <div style="background:var(--white); padding:20px; border-radius:12px; border-top:4px solid #3498db; box-shadow:0 4px 15px rgba(0,0,0,0.05);">
+                <h3 style="color:#3498db; margin-bottom:10px;">📋 Your Order History & VIP Profile</h3>
+                <p style="font-size:13px; margin-bottom:10px;"><b>Registered Mobile:</b> {{ session.get('user_mobile') }}</p>
+                <div class="orders-table-container">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Product</th>
+                                <th>Price</th>
+                                <th>Payment</th>
+                                <th>Status & OTP</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for uo in user_orders %}
+                            <tr>
+                                <td><b>{{ uo[1] }}</b></td>
+                                <td>{{ uo[2] }} (Size: {{ uo[3] }})</td>
+                                <td>₹{{ uo[5] }}</td>
+                                <td>{{ uo[9] }}</td>
+                                <td><span style="background:#2ed573; color:white; padding:2px 6px; border-radius:4px; font-size:11px;">{{ uo[10] }}</span><br><small>OTP: {{ uo[11] }}</small></td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" style="text-align:center; color:#777;">You haven't placed any orders yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
             <div class="admin-panel" id="adminPanel">
-                <h3>📊 Shop Owner Management Dashboard & Revenue</h3>
+                <h3>📊 Shop Owner Advanced Dashboard & Revenue</h3>
                 
                 <div class="analytics-card">
                     <div>
@@ -332,10 +383,18 @@ FINAL_STORE_TEMPLATE = """
                             <div class="color-toolbox-box">
                                 <label style="font-weight:bold; font-size:13px; color:var(--dark);">🎨 Select Color:</label>
                                 <input type="color" name="colors" value="#ff4757" required>
-                                <span style="font-size:12px; color:#666;">(Click box to pick any color)</span>
                             </div>
                         </div>
                         <button type="submit" class="publish-btn">🚀 Publish Product & Inventory</button>
+                    </form>
+                </div>
+
+                <div style="background:#e8f8f5; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid #2ed573;">
+                    <h4 style="color:#2f9e44; margin-bottom:10px;">🏷️ Create Festive Discount Coupon Code</h4>
+                    <form action="/add_coupon" method="POST" style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <input type="text" name="code" placeholder="Coupon Code (e.g. DIWALI20)" required style="flex:1;">
+                        <input type="number" name="discount_percent" placeholder="Discount % (e.g. 15)" required style="flex:1;">
+                        <button type="submit" style="background:#2ed573; color:white; border:none; padding:10px 20px; border-radius:6px; font-weight:bold; cursor:pointer;">Add Coupon</button>
                     </form>
                 </div>
 
@@ -368,42 +427,6 @@ FINAL_STORE_TEMPLATE = """
                             {% else %}
                             <tr>
                                 <td colspan="6" style="text-align:center; color:#777;">No orders received yet.</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-                <h4 style="color:var(--dark); margin:20px 0 10px 0;">📦 Manage Store Products</h4>
-                <div class="orders-table-container">
-                    <table class="orders-table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Photo</th>
-                                <th>Name</th>
-                                <th>Stock</th>
-                                <th>Price</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for p in products %}
-                            <tr>
-                                <td>{{ p[0] }}</td>
-                                <td>
-                                    {% if p[8] %}
-                                        <img src="{{ url_for('static', filename='uploads/' + p[8]) }}" style="width:40px; height:40px; object-fit:cover; border-radius:4px;">
-                                    {% else %}
-                                        No Image
-                                    {% endif %}
-                                </td>
-                                <td>{{ p[1] }}</td>
-                                <td><b>{{ p[5] }} left</b></td>
-                                <td>₹{{ p[4] }}</td>
-                                <td>
-                                    <a href="/delete_product/{{ p[0] }}" class="action-link" style="background:#ff4757;" onclick="return confirm('Delete?')">Delete</a>
-                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -445,13 +468,6 @@ FINAL_STORE_TEMPLATE = """
                         {% endfor %}
                     </div>
 
-                    {% if p[7] and p[7].strip() != '' %}
-                    <div style="font-size:12px; color:#666; margin-top:6px;">Selected Color:</div>
-                    <div class="tags-container">
-                        <span class="color-dot" style="background:{{ p[7] }};" title="{{ p[7] }}"></span>
-                    </div>
-                    {% endif %}
-
                     <div class="btn-group">
                         <button class="cart-btn" onclick="addToCart('{{ p[1] }}', '{{ p[4] }}')">🛒 Cart</button>
                         <button class="wish-btn" onclick="addToWishlist('{{ p[1] }}', '{{ p[4] }}')">❤️</button>
@@ -479,19 +495,18 @@ FINAL_STORE_TEMPLATE = """
         </div>
     </div>
 
+    <!-- Customer Login / Registration Modal -->
     <div class="modal" id="regModal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('regModal')">&times;</span>
-            <h3 style="color:var(--primary); margin-bottom:5px;">✨ Customer Registration & VIP Club</h3>
-            <p style="font-size:12px; color:#666; margin-bottom:12px;">Register with Mobile, Email & Social IDs.</p>
+            <h3 style="color:var(--primary); margin-bottom:5px;">👤 Customer Login & VIP Club</h3>
+            <p style="font-size:12px; color:#666; margin-bottom:12px;">Login with your Mobile to access Order History.</p>
             
-            <form action="/register_user" method="POST">
+            <form action="/login_user" method="POST">
                 <input type="text" name="full_name" placeholder="Full Name / पूर्ण नाव" required>
-                <input type="text" name="mobile" placeholder="Mobile Number / मोबाईल नंबर" required>
+                <input type="text" name="mobile" placeholder="Mobile Number / मोबाईल नंबर (Login ID)" required>
                 <input type="email" name="email" placeholder="Email ID / ईमेल आयडी" required>
-                <input type="text" name="insta" placeholder="Instagram ID (e.g. @username)">
-                <input type="text" name="facebook" placeholder="Facebook Profile Link / Name">
-                <button type="submit" class="confirm-btn" style="background:#2ed573;">Complete Registration</button>
+                <button type="submit" class="confirm-btn" style="background:#2ed573;">Login / Register</button>
             </form>
         </div>
     </div>
@@ -499,33 +514,29 @@ FINAL_STORE_TEMPLATE = """
     <div class="modal" id="checkoutModal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('checkoutModal')">&times;</span>
-            <h3 style="color:var(--primary); margin-bottom:8px;">⚡ Instant Order Slip & Online Payment</h3>
+            <h3 style="color:var(--primary); margin-bottom:8px;">⚡ Instant Order & Discount Coupon</h3>
             <p id="chkSummary" style="font-weight:bold; margin-bottom:12px; color:var(--dark);"></p>
             
             <label style="font-size:12px; font-weight:bold;">Select Exact Size:</label>
             <select id="sizeDropdown"></select>
 
-            <div id="colorSelectionArea">
-                <label style="font-size:12px; font-weight:bold;">Product Color:</label>
-                <input type="text" id="colorDisplay" readonly style="background:#eee;">
-            </div>
-
-            <input type="text" id="buyerName" placeholder="Full Name / ग्राहकाचे नाव" required>
-            <input type="text" id="buyerMobile" placeholder="Mobile Number / मोबाईल नंबर" required>
+            <input type="text" id="buyerName" value="{{ session.get('user_name', '') }}" placeholder="Full Name / ग्राहकाचे नाव" required>
+            <input type="text" id="buyerMobile" value="{{ session.get('user_mobile', '') }}" placeholder="Mobile Number / मोबाईल नंबर" required>
             <input type="text" id="buyerAddress" placeholder="Delivery Address / पत्ता (Beed)" required>
             
+            <div style="display:flex; gap:6px; margin:8px 0;">
+                <input type="text" id="couponCodeInput" placeholder="Enter Coupon (e.g. DIWALI20)" style="margin:0;">
+                <button type="button" onclick="applyCoupon()" style="background:#ffa502; color:white; border:none; padding:8px 12px; border-radius:6px; font-weight:bold; cursor:pointer;">Apply</button>
+            </div>
+            <small id="couponMsg" style="color:#2ed573; font-weight:bold; display:block; margin-bottom:8px;"></small>
+
             <label style="font-size:12px; font-weight:bold; display:block; margin-top:4px;">Select Payment Option:</label>
-            <select id="paymentMode" onchange="checkPaymentMethod(this.value)">
+            <select id="paymentMode">
                 <option value="Razorpay Online (UPI/Card)">Razorpay Online Payment (UPI / GPay / Cards)</option>
-                <option value="PhonePe / GPay Direct (9405691878)">PhonePe / GPay Direct (9405691878)</option>
                 <option value="Cash on Delivery (COD)">Cash on Delivery (COD - OTP Verified)</option>
             </select>
 
-            <div class="upi-box" id="upiNoticeBox" style="display:none;">
-                <p>⚡ Pay via PhonePe / GPay / UPI to: <b>9405691878</b></p>
-            </div>
-
-            <button onclick="confirmOrder()" class="confirm-btn">Proceed to Pay & Confirm Order</button>
+            <button onclick="confirmOrder()" class="confirm-btn">Proceed & Confirm Order</button>
         </div>
     </div>
 
@@ -539,7 +550,7 @@ FINAL_STORE_TEMPLATE = """
             <span class="close-btn" onclick="closeModal('aboutModal')">&times;</span>
             <h3 style="color:var(--primary); margin-bottom:12px;">⭐ About Little Star Readymade Kids Wear</h3>
             <p style="font-size:13px; color:#555; line-height:1.6; margin-bottom:10px;">
-                <strong>Little Star Readymade Kids Wear (Beed)</strong> brings you the finest and most trending festive and daily wear collection for newborns, kids (0 size to 15 years), along with exclusive Ladies and Gents readymade garments.
+                <strong>Little Star Readymade Kids Wear (Beed)</strong> brings you the finest collection for kids (0 to 15 years), Ladies, and Gents wear with advanced digital tracking and instant WhatsApp updates.
             </p>
             <button onclick="closeModal('aboutModal')" class="confirm-btn" style="background:#2f3542;">Close</button>
         </div>
@@ -549,6 +560,7 @@ FINAL_STORE_TEMPLATE = """
         let currentProduct = {};
         let selectedProductColor = "";
         let currentProductPrice = 0;
+        let discountMultiplier = 1;
 
         function addSize(sizeText) {
             let sizeInput = document.getElementById('finalSizesInput');
@@ -559,10 +571,7 @@ FINAL_STORE_TEMPLATE = """
             }
         }
 
-        function clearSizes() {
-            document.getElementById('finalSizesInput').value = "";
-        }
-
+        function clearSizes() { document.getElementById('finalSizesInput').value = ""; }
         function openRegModal() { document.getElementById('regModal').style.display = 'flex'; }
         function openAboutModal() { document.getElementById('aboutModal').style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
@@ -582,9 +591,8 @@ FINAL_STORE_TEMPLATE = """
             }
         }
 
-        function addToWishlist(name, price) {
-            alert("❤️ " + name + " (₹" + price + ") has been added to your Wishlist!");
-        }
+        function addToWishlist(name, price) { alert("❤️ " + name + " added to Wishlist!"); }
+        function addToCart(name, price) { alert("🛍️ " + name + " added to Cart!"); }
 
         function filterMenu(category, subcategory) {
             let links = document.querySelectorAll('.menu-link');
@@ -595,7 +603,6 @@ FINAL_STORE_TEMPLATE = """
             cards.forEach(card => {
                 let cat = card.getAttribute('data-category');
                 let sub = card.getAttribute('data-subcategory');
-                
                 if(category === 'All' || (cat === category && (subcategory === 'All' || sub === subcategory))) {
                     card.style.display = 'block';
                 } else {
@@ -609,39 +616,40 @@ FINAL_STORE_TEMPLATE = """
             let cards = document.querySelectorAll('.product-card');
             cards.forEach(card => {
                 let name = card.getAttribute('data-name');
-                let sizes = card.getAttribute('data-sizes');
-                let colors = card.getAttribute('data-colors');
-                if(name.includes(query) || sizes.includes(query) || colors.includes(query)) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
+                if(name.includes(query)) { card.style.display = 'block'; } else { card.style.display = 'none'; }
             });
-        }
-
-        function addToCart(name, price) {
-            alert("🛍️ " + name + " (₹" + price + ") added to Cart successfully!");
         }
 
         function openCheckout(name, price, sizes, colorHex) {
             currentProduct = { name, price };
             currentProductPrice = parseInt(price);
-            selectedProductColor = colorHex;
+            discountMultiplier = 1;
             document.getElementById('chkSummary').innerText = name + " - ₹" + price;
+            document.getElementById('couponCodeInput').value = "";
+            document.getElementById('couponMsg').innerText = "";
 
             let sizeSelect = document.getElementById('sizeDropdown');
             sizeSelect.innerHTML = sizes.split(',').map(s => `<option value="${s.trim()}">${s.trim()}</option>`).join('');
-
-            document.getElementById('colorDisplay').value = colorHex;
+            selectedProductColor = colorHex;
             document.getElementById('checkoutModal').style.display = 'flex';
         }
 
-        function checkPaymentMethod(val) {
-            let box = document.getElementById('upiNoticeBox');
-            if(val.includes('Direct')) {
-                box.style.display = 'block';
-            } else {
-                box.style.display = 'none';
+        function applyCoupon() {
+            let code = document.getElementById('couponCodeInput').value.trim();
+            if(code) {
+                fetch('/check_coupon/' + code)
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) {
+                        let disc = data.discount;
+                        discountMultiplier = (100 - disc) / 100;
+                        let finalP = Math.round(currentProductPrice * discountMultiplier);
+                        document.getElementById('couponMsg.innerText') = "✅ Coupon Applied! " + disc + "% OFF. New Price: ₹" + finalP;
+                        alert("✅ Coupon Applied Successfully! Discount: " + disc + "%");
+                    } else {
+                        alert("❌ Invalid Coupon Code!");
+                    }
+                });
             }
         }
 
@@ -652,17 +660,17 @@ FINAL_STORE_TEMPLATE = """
             let mobile = document.getElementById('buyerMobile').value;
             let address = document.getElementById('buyerAddress').value;
             let payment = document.getElementById('paymentMode').value;
+            let finalPrice = Math.round(currentProductPrice * discountMultiplier);
 
             if(name && mobile && address) {
                 let orderId = "LS" + Math.floor(1000 + Math.random() * 9000);
                 let generatedOtp = Math.floor(1000 + Math.random() * 9000);
 
                 if(payment.includes('Razorpay')) {
-                    // Razorpay Checkout Integration
                     fetch('/create_razorpay_order', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: `amount=${currentProductPrice}`
+                        body: `amount=${finalPrice}`
                     })
                     .then(res => res.json())
                     .then(data => {
@@ -674,32 +682,29 @@ FINAL_STORE_TEMPLATE = """
                             "description": currentProduct.name,
                             "order_id": data.razorpay_order_id,
                             "handler": function (response){
-                                saveOrderData(orderId, size, color, name, mobile, address, payment, generatedOtp);
+                                saveOrderData(orderId, size, color, name, mobile, address, payment, generatedOtp, finalPrice);
                             },
-                            "prefill": {
-                                "name": name,
-                                "contact": mobile
-                            },
+                            "prefill": { "name": name, "contact": mobile },
                             "theme": { "color": "#ff4757" }
                         };
                         var rzp1 = new Razorpay(options);
                         rzp1.open();
                     });
                 } else {
-                    saveOrderData(orderId, size, color, name, mobile, address, payment, generatedOtp);
+                    saveOrderData(orderId, size, color, name, mobile, address, payment, generatedOtp, finalPrice);
                 }
             } else {
-                alert("कृपया ग्राहकाचे नाव, मोबाईल आणि पत्ता पूर्ण भरा.");
+                alert("कृपया सर्व माहिती पूर्ण भरा.");
             }
         }
 
-        function saveOrderData(orderId, size, color, name, mobile, address, payment, generatedOtp) {
+        function saveOrderData(orderId, size, color, name, mobile, address, payment, generatedOtp, finalPrice) {
             fetch('/save_order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `order_id=${orderId}&product_name=${currentProduct.name}&size=${size}&color=${color}&price=${currentProductPrice}&customer_name=${name}&mobile=${mobile}&address=${address}&payment=${payment}&status=1. Order Placed & Packed (Beed Store)&otp=${generatedOtp}`
+                body: `order_id=${orderId}&product_name=${currentProduct.name}&size=${size}&color=${color}&price=${finalPrice}&customer_name=${name}&mobile=${mobile}&address=${address}&payment=${payment}&status=1. Order Placed & Packed (Beed)&otp=${generatedOtp}`
             }).then(() => {
-                let invoiceSlip = `⭐ *LITTLE STAR READYMADE KIDS WEAR* ⭐%0A-----------------------------------%0A✅ *New Order Placed!*%0AOrder ID: *${orderId}*%0AProduct: ${currentProduct.name}%0ASize: ${size}%0APrice: ₹${currentProductPrice}%0APayment: ${payment}%0A-----------------------------------%0A🔒 *Delivery OTP: ${generatedOtp}*%0A-----------------------------------%0ACustomer: ${name}%0AMobile: ${mobile}%0AAddress: ${address}%0A-----------------------------------%0A📍 *Store:* Near City Hotel, Karanja Road, Beed`;
+                let invoiceSlip = `⭐ *LITTLE STAR READYMADE KIDS WEAR* ⭐%0A-----------------------------------%0A✅ *Order Confirmed!*%0AOrder ID: *${orderId}*%0AProduct: ${currentProduct.name}%0ASize: ${size}%0APrice Paid: ₹${finalPrice}%0A-----------------------------------%0A🔒 *Delivery OTP: ${generatedOtp}*%0A-----------------------------------%0ACustomer: ${name}%0AMobile: ${mobile}%0AAddress: ${address}%0A-----------------------------------%0A📍 *Store:* Near City Hotel, Karanja Road, Beed`;
                 
                 window.open(`https://wa.me/919405691878?text=${invoiceSlip}`, '_blank');
                 alert("Order Placed Successfully! Delivery OTP is: " + generatedOtp);
@@ -709,34 +714,23 @@ FINAL_STORE_TEMPLATE = """
         }
 
         function verifyOTP(orderId) {
-            let enteredOtp = prompt("Enter 4-Digit Delivery OTP received by Customer:");
-            if(enteredOtp) {
-                window.location.href = `/verify_order_otp/${orderId}/${enteredOtp}`;
-            }
+            let enteredOtp = prompt("Enter 4-Digit Delivery OTP:");
+            if(enteredOtp) { window.location.href = `/verify_order_otp/${orderId}/${enteredOtp}`; }
         }
 
         function updateOrderStatus(orderId) {
-            let newStage = prompt("Update Order Stage (e.g. 2. Out for Delivery in Beed / 3. Delivered & Completed):", "2. Out for Delivery in Beed");
-            let newLocation = prompt("Update Current Location (e.g. Karanja Road, Beed):", "Karanja Road, Beed");
-            if(newStage && newLocation) {
-                window.location.href = `/update_order_stage/${orderId}/${encodeURIComponent(newStage)}/${encodeURIComponent(newLocation)}`;
-            }
+            let newStage = prompt("Update Stage (e.g. 2. Out for Delivery / 3. Delivered):", "2. Out for Delivery");
+            let newLoc = prompt("Current Location:", "Karanja Road, Beed");
+            if(newStage && newLoc) { window.location.href = `/update_order_stage/${orderId}/${encodeURIComponent(newStage)}/${encodeURIComponent(newLoc)}`; }
         }
 
         function trackOrder() {
             let oid = document.getElementById('trackInput').value.trim();
             if(oid) {
-                fetch('/track/' + oid)
-                .then(res => res.json())
-                .then(data => {
-                    if(data.success) {
-                        alert("📦 Live Order Tracking Report:\\n\\nOrder ID: " + data.order_id + "\\nProduct: " + data.product + "\\n📍 Current Location: " + data.location + "\\n🚀 Current Stage: " + data.status + "\\n🔒 Delivery OTP: " + data.otp);
-                    } else {
-                        alert("❌ Order ID not found!");
-                    }
+                fetch('/track/' + oid).then(res => res.json()).then(data => {
+                    if(data.success) { alert("📦 Tracking:\\nOrder ID: " + data.order_id + "\\nStatus: " + data.status + "\\nLocation: " + data.location + "\\nOTP: " + data.otp); }
+                    else { alert("❌ Order ID not found!"); }
                 });
-            } else {
-                alert("Please enter a valid Order ID.");
             }
         }
     </script>
@@ -753,26 +747,74 @@ def index():
     cursor.execute('SELECT * FROM orders ORDER BY id DESC')
     orders = cursor.fetchall()
     
+    user_mobile = session.get('user_mobile')
+    user_orders = []
+    if user_mobile:
+        cursor.execute('SELECT * FROM orders WHERE mobile = ? ORDER BY id DESC', (user_mobile,))
+        user_orders = cursor.fetchall()
+        
     total_revenue = sum(o[5] for o in orders if 'Delivered' in o[10])
-    
     conn.close()
-    return render_template_string(FINAL_STORE_TEMPLATE, products=products, orders=orders, total_revenue=total_revenue)
+    return render_template_string(FINAL_STORE_TEMPLATE, products=products, orders=orders, user_orders=user_orders, total_revenue=total_revenue)
+
+@app.route('/login_user', methods=['POST'])
+def login_user():
+    full_name = request.form['full_name']
+    mobile = request.form['mobile']
+    email = request.form['email']
+    
+    session['user_name'] = full_name
+    session['user_mobile'] = mobile
+    
+    conn = sqlite3.connect('littlestar.db')
+    cursor = conn.cursor()
+    try:
+        cursor.execute('INSERT INTO users (full_name, mobile, email) VALUES (?, ?, ?)', (full_name, mobile, email))
+        conn.commit()
+    except:
+        pass
+    conn.close()
+    return redirect(url_for('index'))
+
+@app.route('/logout')
+def logout():
+    session.pop('user_name', None)
+    session.pop('user_mobile', None)
+    return redirect(url_for('index'))
+
+@app.route('/add_coupon', methods=['POST'])
+def add_coupon():
+    code = request.form['code'].upper()
+    discount_percent = request.form['discount_percent']
+    conn = sqlite3.connect('littlestar.db')
+    cursor = conn.cursor()
+    cursor.execute('INSERT OR IGNORE INTO coupons (code, discount_percent) VALUES (?, ?)', (code, discount_percent))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('index'))
+
+@app.route('/check_coupon/<code>')
+def check_coupon(code):
+    conn = sqlite3.connect('littlestar.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT discount_percent FROM coupons WHERE code = ?', (code.upper(),))
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return {"success": True, "discount": row[0]}
+    return {"success": False}
 
 @app.route('/create_razorpay_order', methods=['POST'])
 def create_razorpay_order():
-    amount = int(request.form['amount']) * 100  # Amount in paise
+    amount = int(request.form['amount']) * 100
     KEY_ID = os.environ.get('RAZORPAY_KEY_ID', 'rzp_test_dummykey')
     KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', 'dummysecret')
-    
     try:
         import razorpay
-        client = razorpay.Auth(auth=(KEY_ID, KEY_SECRET)) # or client = razorpay.Client(auth=(KEY_ID, KEY_SECRET))
-        # Simplified client creation for safety:
         client = razorpay.Client(auth=(KEY_ID, KEY_SECRET))
         payment_order = client.order.create({"amount": amount, "currency": "INR", "payment_capture": 1})
         return {"razorpay_order_id": payment_order['id'], "amount": amount, "key_id": KEY_ID}
-    except Exception as e:
-        # Fallback dummy order if keys are not configured yet
+    except:
         return {"razorpay_order_id": "order_dummy_" + str(random.randint(1000,9999)), "amount": amount, "key_id": KEY_ID}
 
 @app.route('/add_product', methods=['POST'])
@@ -794,62 +836,23 @@ def add_product():
 
     conn = sqlite3.connect('littlestar.db')
     cursor = conn.cursor()
-    cursor.execute('''
-        INSERT INTO products (name, category, subcategory, price, stock, sizes, colors, image) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (name, category, subcategory, price, stock, sizes, colors, image_filename))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('index'))
-
-@app.route('/delete_product/<int:prod_id>')
-def delete_product(prod_id):
-    conn = sqlite3.connect('littlestar.db')
-    cursor = conn.cursor()
-    cursor.execute('DELETE FROM products WHERE id = ?', (prod_id,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('index'))
-
-@app.route('/register_user', methods=['POST'])
-def register_user():
-    full_name = request.form['full_name']
-    mobile = request.form['mobile']
-    email = request.form['email']
-    insta = request.form['insta']
-    facebook = request.form['facebook']
-
-    conn = sqlite3.connect('littlestar.db')
-    cursor = conn.cursor()
-    cursor.execute('INSERT INTO users (full_name, mobile, email, insta, facebook) VALUES (?, ?, ?, ?, ?)',
-                   (full_name, mobile, email, insta, facebook))
+    cursor.execute('INSERT INTO products (name, category, subcategory, price, stock, sizes, colors, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                   (name, category, subcategory, price, stock, sizes, colors, image_filename))
     conn.commit()
     conn.close()
     return redirect(url_for('index'))
 
 @app.route('/save_order', methods=['POST'])
 def save_order():
-    order_id = request.form['order_id']
-    product_name = request.form['product_name']
-    size = request.form['size']
-    color = request.form['color']
-    price = request.form['price']
-    customer_name = request.form['customer_name']
-    mobile = request.form['mobile']
-    address = request.form['address']
-    payment = request.form['payment']
-    status = request.form['status']
-    otp = request.form['otp']
-
     conn = sqlite3.connect('littlestar.db')
     cursor = conn.cursor()
     cursor.execute('''
         INSERT INTO orders (order_id, product_name, size, color, price, customer_name, mobile, address, payment, status, otp, return_reason)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (order_id, product_name, size, color, price, customer_name, mobile, address, payment, status, otp, address))
-    
-    cursor.execute('UPDATE products SET stock = stock - 1 WHERE name = ? AND stock > 0', (product_name,))
-    
+    ''', (request.form['order_id'], request.form['product_name'], request.form['size'], request.form['color'], 
+          request.form['price'], request.form['customer_name'], request.form['mobile'], request.form['address'], 
+          request.form['payment'], request.form['status'], request.form['otp'], request.form['address']))
+    cursor.execute('UPDATE products SET stock = stock - 1 WHERE name = ? AND stock > 0', (request.form['product_name'],))
     conn.commit()
     conn.close()
     return "OK"
@@ -860,15 +863,11 @@ def verify_order_otp(order_id, entered_otp):
     cursor = conn.cursor()
     cursor.execute('SELECT otp FROM orders WHERE order_id = ?', (order_id,))
     row = cursor.fetchone()
-    
     if row and row[0] == entered_otp:
         cursor.execute('UPDATE orders SET status = "3. Delivered & Completed" WHERE order_id = ?', (order_id,))
         conn.commit()
-        conn.close()
-        return redirect(url_for('index'))
-    else:
-        conn.close()
-        return "<script>alert('❌ Incorrect OTP! Delivery could not be verified.'); window.location.href='/';</script>"
+    conn.close()
+    return redirect(url_for('index'))
 
 @app.route('/update_order_stage/<order_id>/<stage>/<location>')
 def update_order_stage(order_id, stage, location):
@@ -888,8 +887,7 @@ def track(order_id):
     conn.close()
     if order:
         return {"success": True, "order_id": order[0], "product": order[1], "status": order[2], "name": order[3], "payment": order[4], "size": order[5], "color": order[6], "otp": order[7], "location": order[8]}
-    else:
-        return {"success": False}
+    return {"success": False}
 
 if __name__ == '__main__':
     app.run()
